@@ -1,0 +1,44 @@
+{
+  "name": "fc-dbconf_next",
+  "version": "1.0.0",
+  "description": "This is a database configuration management package for Node.js applications, designed to simplify the process of handling multiple database connections and configurations in a structured manner.",
+  "main": "lib/index.js",
+  "types": "lib/index.d.ts",
+  "scripts": {
+    "build": "tsc",
+    "prepare": "npm run build"
+  },
+  "repository": {
+    "type": "git",
+    "url": "git+https://github.com/fehmicorp/dbConf.git"
+  },
+  "keywords": [
+    "database",
+    "configuration",
+    "dbconfig",
+    "nodejs",
+    "db management",
+    "nextjs"
+  ],
+  "author": "Fehmi Corporation",
+  "license": "MIT",
+  "type": "commonjs",
+  "bugs": {
+    "url": "https://github.com/fehmicorp/dbConf/issues"
+  },
+  "homepage": "https://github.com/fehmicorp/dbConf#readme",
+  "dependencies": {
+    "jsonwebtoken": "^9.0.0",
+    "pg": "^8.16.3",
+    "redis": "^5.10.0"
+  },
+  "peerDependencies": {
+    "next": ">=13.4.0"
+  },
+  "devDependencies": {
+    "@types/jsonwebtoken": "^9.0.5",
+    "@types/node": "^20.11.0",
+    "@types/pg": "^8.16.0",
+    "typescript": "^5.9.3"
+  }
+}
