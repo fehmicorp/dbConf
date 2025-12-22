@@ -7,6 +7,12 @@ export class Response{
       { status }
     );
   }
+  static failed(data: any, status: number = 200) {
+    return NextResponse.json(
+      { success: false, data },
+      { status }
+    );
+  }
   static error(error: string, status: number = 500) {
     return NextResponse.json(
       { success: false, error },

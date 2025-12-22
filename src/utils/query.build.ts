@@ -1,8 +1,10 @@
-export const buildQuery = (query: any) => {
+import { buildIdentityParams } from "./params.build";
+
+export const buildQuery = (query: any, auth: any | null) => {
   if (!query?.table) {
     throw new Error("Table name is required");
   }
-  const selectStr = buildSelect(query?.select);
+  const selectStr = buildSelect(query?.select, auth ?? null);
   const whereStr = buildWhere(query?.where);
   let sql = `SELECT ${selectStr} FROM ${query.table}`;
   if (whereStr) {
@@ -10,21 +12,71 @@ export const buildQuery = (query: any) => {
   }
   return sql;
 };
+export const prepareQuery = (query: any, input: any, body: any) => {
+  const sql = buildQuery(query, input?.body?.auth ?? null)
+  const params = buildIdentityParams(body, input.body);
+  const values: any[] = [];
+  let i = 1;
+  const transformedSql = sql.replace(/:(\w+)/g, (match, key) => {
+    if (key in params) {
+      values.push(params[key]);
+      return `$${i++}`;
+    }
+    return match;
+  });
+  const authParams = input?.body?.auth ?? null;
+  // const authValue = authParams ? getAuthValue(authParams, body) : null;
+  return { sql: transformedSql, values, auth: authParams};
+};
+
+// export const getAuthValue = (
+//   auth: any,
+//   body: any
+// ): Record<string, any> => {
+//   const authValue: Record<string, any> = {};
+//   if (!auth || typeof auth !== "object" || !body || typeof body !== "object") {
+//     return authValue;
+//   }
+//   Object.keys(auth).forEach((key) => {
+//     // 3️⃣ Check if the incoming body has this specific key
+//     if (Object.prototype.hasOwnProperty.call(body, key)) {
+//       authValue[key] = body[key];
+//     }
+//   });
+//   return authValue
+// }
 
 export const buildSelect = (
-  select: Array<string> | string | number | undefined
+  select: string[] | string | number | undefined,
+  auth: Record<string, string> | null
 ): string => {
+  // 1️⃣ COUNT → never append auth
   if (select === 0) {
     return "COUNT(*) AS count";
   }
+  let cols: string[] = [];
   if (Array.isArray(select) && select.length > 0) {
-    return select.join(", ");
+    cols = [...select];
+  } else if (typeof select === "string" && select.trim() !== "" && select !== "*") {
+    cols = select.split(",").map(c => c.trim());
+  } else {
+    // "*" or undefined → do not append auth
+    return "*";
   }
-  if (typeof select === "string" && select.trim() !== "") {
-    return select;
+  
+  // 3️⃣ Append auth DB columns (values only)
+  if (auth && typeof auth === "object") {
+    const authColumns = Object.values(auth);
+    for (const dbCol of authColumns) {
+      if (dbCol) {
+        cols.push(dbCol);
+      }
+    }
   }
-  return "*";
+  const uniqueCols = Array.from(new Set(cols));
+  return uniqueCols.join(", ");
 };
+
 
 export const buildWhere = (
   where?: {

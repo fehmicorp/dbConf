@@ -7,17 +7,19 @@ export default async function handlePost(req: NextRequest) {
   const { dbConf, query, input, security } = await redisData(req);
   const queryType = query?.type;
   let body: any = {};
-    try {
-      body = await req.json();
-    } catch {
-      body = {};
-    }
+  try {
+    body = await req.json();
+  } catch {
+    body = {};
+  }
+  let result;
   switch (queryType) {
     case "FETCH":
-      return fetchDb(dbConf, query, input, body);
+      result = fetchDb(dbConf, query, input, body);
       break;
 
       default:
-      return Response.error("Invalid Query Type", 400);
+      result = false;
   }
+  
 }

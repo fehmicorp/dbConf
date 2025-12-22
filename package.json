@@ -28,6 +28,7 @@
   },
   "homepage": "https://github.com/fehmicorp/dbConf#readme",
   "dependencies": {
+    "bcryptjs": "^3.0.3",
     "jsonwebtoken": "^9.0.0",
     "pg": "^8.16.3",
     "redis": "^5.10.0"

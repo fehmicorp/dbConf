@@ -5,7 +5,6 @@ import handlePut from "./put";
 import handleDelete from "./delete";
 import handlePatch from "./patch";
 import { Response } from "./response";
-import { redisData } from "../utils/header";
 
 export class Rest {
   static async handle(

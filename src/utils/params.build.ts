@@ -1,32 +1,40 @@
-export const buildParams = (
+export const buildIdentityParams = (
   body: Record<string, any>,
-  input: any
+  input: {
+    required?: string[];
+    map?: Record<string, string | string[]>;
+  }
 ): Record<string, any> => {
   const params: Record<string, any> = {};
-  const requiredFields = input?.required || [];
+
+  const required = input?.required || [];
   const mapConfig = input?.map || {};
-  for (const field of requiredFields) {
-    if (
-      body[field] === undefined ||
-      body[field] === null ||
-      body[field] === ""
-    ) {
-      throw new Error(`Missing required field: ${field}`);
+
+  // 1️⃣ Loop over required identity fields
+  for (const reqKey of required) {
+
+    const value = body[reqKey];
+    if (value === undefined || value === null || value === "") {
+      throw new Error(`Missing required field: ${reqKey}`);
     }
-  }
-  // 2️⃣ Build params using map
-  for (const [inputKey, dbMap] of Object.entries(mapConfig)) {
-    const value = body[inputKey];    if (value === undefined) continue;
-    // Case: input → multiple DB columns (OR case)
-    if (Array.isArray(dbMap)) {
-      for (const column of dbMap) {
-        params[column] = value;
+
+    const mappedCols = mapConfig[reqKey];
+
+    if (!mappedCols) {
+      throw new Error(`No mapping found for required field: ${reqKey}`);
+    }
+
+    // 2️⃣ One input → many DB columns (OR identity)
+    if (Array.isArray(mappedCols)) {
+      for (const col of mappedCols) {
+        params[col] = value;
       }
     }
-    // Case: input → single DB column (AND case)
-    else if (typeof dbMap === "string") {
-      params[dbMap] = value;
+    // 3️⃣ One input → one DB column
+    else if (typeof mappedCols === "string") {
+      params[mappedCols] = value;
     }
   }
+
   return params;
-}
+};
