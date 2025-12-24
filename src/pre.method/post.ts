@@ -46,7 +46,6 @@ export async function graphQL(redis: any, body: BodyTypes): Promise<ResultType> 
     const andConditions: string[] = [];
 
     filterKeys.forEach(key => {
-      // Check if this filter key needs to be mapped to multiple columns (like 'name' -> 'username', 'email')
       if (input?.map && input.map[key]) {
         const mapped = input.map[key];
         if (Array.isArray(mapped)) {
@@ -55,7 +54,6 @@ export async function graphQL(redis: any, body: BodyTypes): Promise<ResultType> 
           andConditions.push(mapped);
         }
       } else {
-        // Direct column mapping
         andConditions.push(key);
       }
     });
@@ -77,7 +75,6 @@ export async function graphQL(redis: any, body: BodyTypes): Promise<ResultType> 
 
 // Use body.filter as the primary data source for parameters
 const result = await fetchDb(dbConf, mappedQuery, input, body.filter || body);
-
   // Dynamic Reshaping based on Redis JSON
   if (result.success && query.response?.shape) {
     const shape = query.response.shape;
@@ -98,10 +95,8 @@ const result = await fetchDb(dbConf, mappedQuery, input, body.filter || body);
         }
       }
     };
-
     return { ...result, data: finalData };
   }
-
   return result;
 }
 
