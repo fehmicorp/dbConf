@@ -1,15 +1,5 @@
 import { Pool } from "pg";
-
-export type DbConf = {
-  dbUser: string;
-  dbHost: string;
-  dbName: string;
-  dbPwd: string;
-  dbPort: number;
-  maxConnections?: number;
-  idleTimeoutMillis?: number;
-  connectionTimeoutMillis?: number;
-};
+import { DbConf } from "../utils/data.type";
 
 export function getDbPool(dbConf: DbConf){
   return new Pool({

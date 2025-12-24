@@ -1,60 +1,92 @@
-import { Response } from "../restapi/response";
-import { DbConf, getDbPool } from "./conf";
+import { getDbPool } from "./conf";
 import { prepareQuery } from "../utils/query.build";
 import { verifyPassword } from "../utils/bcrypt";
+import { 
+  BodyTypes, 
+  DbConf, 
+  InputTypes, 
+  QueryTypes, 
+  ResultType 
+} from "../utils/data.type";
 
 export const fetchDb = async (
   dbConf: DbConf,
-  query: any,
-  input: any,
-  body: Array<any>,
-) => {
+  query: QueryTypes,
+  input: InputTypes,
+  body: BodyTypes,
+): Promise<ResultType> => {
   let pool;
-  // Implement the logic to fetch data from the database using the provided dbConf, query, and body.
+  let normalizedBody = body;
+
   try {
     // 1️⃣ Normalize body (array → object)
-    if (Array.isArray(body)) {
-      const ok = body.every(
+    if (Array.isArray(normalizedBody)) {
+      const isItemsValid = normalizedBody.every(
         v => typeof v === "object" && v !== null && !Array.isArray(v)
       );
-      if (!ok) {
-        return Response.error("Invalid body format", 400);
+
+      if (!isItemsValid) {
+        return { 
+          success: false, 
+          msg: "Invalid body format: expected an array of objects", 
+          error: { code: 400 } 
+        };
       }
-      body = Object.assign({}, ...body);
+      normalizedBody = Object.assign({}, ...normalizedBody);
     }
+
     // 2️⃣ Prepare SQL + params + auth metadata
-    const { sql, values, auth } = prepareQuery(query, input, body);
+    const { sql, values, auth } = prepareQuery(query, input, normalizedBody);
+
     // 3️⃣ Execute query
     pool = getDbPool(dbConf);
     const dbResult = await pool.query(sql, values);
+
     // 4️⃣ No records found
     if (!dbResult.rows || dbResult.rows.length === 0) {
-      return Response.failed("No record found", 200);
+      return { 
+        success: false, 
+        msg: "No record found", 
+        data: null, 
+        error: { code: 200 } // Logic: Success true/false is for "found", but HTTP is 200
+      };
     }
+
     // 5️⃣ AUTH FLOW (verify after fetch)
     if (auth) {
       const row = dbResult.rows[0];
-      const verifiedUser = await verifyPassword(row, auth, body);
+      const verifiedUser = await verifyPassword(row, auth, normalizedBody);
+      
       if (!verifiedUser) {
-        return Response.failed("Invalid credentials", 401);
+        return { 
+          success: false, 
+          msg: "Invalid credentials", 
+          error: { code: 401 } 
+        };
       }
-      return Response.success(verifiedUser);
+      return { success: true, data: verifiedUser };
     }
+
     // 6️⃣ NORMAL FETCH FLOW
-    return Response.success(dbResult.rows);
-  }catch (err: any) {
-    console.error("fetchDb error:", err);
-    return Response.error(
-      err?.message || "Database fetch error",
-      500
-    );
+    return { success: true, data: dbResult.rows };
+
+  } catch (err: unknown) {
+    const errorMessage = err instanceof Error ? err.message : "Database fetch error";
+    console.error("fetchDb error:", errorMessage);
+    
+    return { 
+      success: false, 
+      msg: errorMessage, 
+      error: { code: 500, detail: err } 
+    };
   } finally {
     // 7️⃣ Ensure pool is closed
     if (pool) {
       try {
         await pool.end();
-      } catch {
+      } catch (closeErr) {
+        console.error("Pool close error:", closeErr);
       }
     }
   }
-}
+};

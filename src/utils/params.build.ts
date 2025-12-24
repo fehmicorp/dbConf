@@ -1,8 +1,10 @@
+import { BodyTypes, InputMapTypes, InputRequiredTypes } from "./data.type";
+
 export const buildIdentityParams = (
-  body: Record<string, any>,
+  body: BodyTypes,
   input: {
-    required?: string[];
-    map?: Record<string, string | string[]>;
+    required?: InputRequiredTypes;
+    map?: InputMapTypes;
   }
 ): Record<string, any> => {
   const params: Record<string, any> = {};

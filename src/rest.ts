@@ -1,10 +1,10 @@
 import { NextRequest } from "next/server";
-import handlePost from "./post";
-import handleGet from "./get";
-import handlePut from "./put";
-import handleDelete from "./delete";
-import handlePatch from "./patch";
-import { Response } from "./response";
+import handlePost from "./pre.method/post";
+import handleGet from "./pre.method/get";
+import handlePut from "./pre.method/put";
+import handleDelete from "./pre.method/delete";
+import handlePatch from "./pre.method/patch";
+import { Response } from "./post.method/response";
 
 export class Rest {
   static async handle(

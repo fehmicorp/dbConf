@@ -1,6 +1,7 @@
+import { QuerySelectTypes, QueryTypes, QueryConditions, InputTypes, BodyTypes, InptAuthTypes, QueryWhereTypes } from "./data.type";
 import { buildIdentityParams } from "./params.build";
 
-export const buildQuery = (query: any, auth: any | null) => {
+export const buildQuery = (query: QueryTypes, auth: InptAuthTypes) => {
   if (!query?.table) {
     throw new Error("Table name is required");
   }
@@ -12,9 +13,9 @@ export const buildQuery = (query: any, auth: any | null) => {
   }
   return sql;
 };
-export const prepareQuery = (query: any, input: any, body: any) => {
-  const sql = buildQuery(query, input?.body?.auth ?? null)
-  const params = buildIdentityParams(body, input.body);
+export const prepareQuery = (query: QueryTypes, input: InputTypes, body: BodyTypes) => {
+  const sql = buildQuery(query, input?.auth ?? null)
+  const params = buildIdentityParams(body, input);
   const values: any[] = [];
   let i = 1;
   const transformedSql = sql.replace(/:(\w+)/g, (match, key) => {
@@ -24,7 +25,7 @@ export const prepareQuery = (query: any, input: any, body: any) => {
     }
     return match;
   });
-  const authParams = input?.body?.auth ?? null;
+  const authParams = input?.auth ?? null;
   // const authValue = authParams ? getAuthValue(authParams, body) : null;
   return { sql: transformedSql, values, auth: authParams};
 };
@@ -47,8 +48,8 @@ export const prepareQuery = (query: any, input: any, body: any) => {
 // }
 
 export const buildSelect = (
-  select: string[] | string | number | undefined,
-  auth: Record<string, string> | null
+  select: QuerySelectTypes,
+  auth: InptAuthTypes
 ): string => {
   // 1️⃣ COUNT → never append auth
   if (select === 0) {
@@ -79,10 +80,7 @@ export const buildSelect = (
 
 
 export const buildWhere = (
-  where?: {
-    or?: string[] | string;
-    and?: string[] | string;
-  }
+  where?: QueryWhereTypes
 ): string | null => {
   if (!where) return null;
   const clauses: string[] = [];
@@ -96,7 +94,7 @@ export const buildWhere = (
 };
 
 export const whereAND = (
-  condition: string[] | string
+  condition: QueryConditions
 ): string => {
   if (Array.isArray(condition)) {
     return condition.map(col => `${col} = :${col}`).join(" AND ");
@@ -105,7 +103,7 @@ export const whereAND = (
 };
 
 export const whereOR = (
-  condition: string[] | string
+  condition: QueryConditions
 ): string => {
   if (Array.isArray(condition)) {
     return `(${condition.map(col => `${col} = :${col}`).join(" OR ")})`;

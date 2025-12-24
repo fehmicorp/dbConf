@@ -1,19 +1,16 @@
 import { NextResponse } from "next/server";
+import { ResultDataTypes } from "../utils/data.type";
 
 export class Response{
-  static success(data: any, status: number = 200) {
-    return NextResponse.json(
-      { success: true, data },
-      { status }
-    );
+  static res(success: boolean, msg: string | null, data: ResultDataTypes | null, status: number = 200) {
+    const body = {
+      success,
+      ...(msg && { msg }),
+      ...(data != null && { data })
+    };
+    return NextResponse.json(body, { status });
   }
-  static failed(data: any, status: number = 200) {
-    return NextResponse.json(
-      { success: false, data },
-      { status }
-    );
-  }
-  static error(error: string, status: number = 500) {
+  static error(error: any, status: number = 500) {
     return NextResponse.json(
       { success: false, error },
       { status }
