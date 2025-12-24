@@ -47,8 +47,8 @@ export type GraphQLResolver = {
 
 export type GraphQLResponseShape = {
   shape: {
-    rows: string; // e.g., "@result"
-    meta: Record<string, string>; // e.g., { count: "@meta.total" }
+    rows: string;
+    meta: Record<string, string>;
   };
 };
 
@@ -62,9 +62,9 @@ export type QueryTypes = | {
   offset?: Numbers;
 } | {
   engine: 'graphql';
-  arguments: Record<string, string>;
-  resolver: GraphQLResolver;
-  response: GraphQLResponseShape;
+  arguments?: Record<string, string>;
+  resolver?: GraphQLResolver;
+  response?: GraphQLResponseShape;
 }
 
 export type BodyTypes = Record<string, any>;
@@ -76,7 +76,6 @@ export type InputTypes = {
   auth?: InptAuthTypes;  
   map?: InputMapTypes;
 };
-
 export type ResultDataTypes = | Record<string, unknown> | unknown[] | string | number | null;
 export type ResultType = {
   success: boolean;

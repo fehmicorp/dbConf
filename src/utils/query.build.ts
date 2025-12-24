@@ -1,33 +1,61 @@
 import { QuerySelectTypes, QueryTypes, QueryConditions, InputTypes, BodyTypes, InptAuthTypes, QueryWhereTypes } from "./data.type";
 import { buildIdentityParams } from "./params.build";
 
-export const buildQuery = (query: QueryTypes, auth: InptAuthTypes) => {
+export const buildQuery = (query: any, auth: InptAuthTypes | null) => {
   if (!query?.table) {
     throw new Error("Table name is required");
   }
-  const selectStr = buildSelect(query?.select, auth ?? null);
+
+  const selectStr = buildSelect(query?.select, auth);
   const whereStr = buildWhere(query?.where);
+  
   let sql = `SELECT ${selectStr} FROM ${query.table}`;
+  
   if (whereStr) {
     sql += ` WHERE ${whereStr}`;
   }
+
+  // Handle Pagination for both REST and GraphQL
+  if (query.limit) sql += ` LIMIT ${query.limit}`;
+  if (query.offset) sql += ` OFFSET ${query.offset}`;
+
   return sql;
 };
-export const prepareQuery = (query: QueryTypes, input: InputTypes, body: BodyTypes) => {
-  const sql = buildQuery(query, input?.auth ?? null)
-  const params = buildIdentityParams(body, input);
+
+export const prepareQuery = (query: QueryTypes, input: InputTypes | null, body: BodyTypes) => {
+  const sql = buildQuery(query, input?.auth ?? null);
+
+  // Determine params source
+  // If GraphQL, we use the filter object. If REST, we use the identity builder.
+  const params = query.engine === 'graphql' 
+    ? (body.filter ?? body) 
+    : buildIdentityParams(body, input!);
+  console.log(`Params: ${params}`)
+  console.log(`Sql: ${sql}`)
   const values: any[] = [];
   let i = 1;
+
+  // REPLACEMENT LOGIC
   const transformedSql = sql.replace(/:(\w+)/g, (match, key) => {
-    if (key in params) {
+    // IMPORTANT: In your trigger, you sent 'name', but the SQL likely 
+    // expects 'fullname', 'displayname', etc. based on your redis map.
+    if (params && params[key] !== undefined) {
       values.push(params[key]);
       return `$${i++}`;
     }
-    return match;
+    
+    // If the key is missing in params, we must remove the condition or 
+    // provide a NULL to avoid the PostgreSQL syntax error near ":"
+    console.warn(`Missing value for SQL placeholder: :${key}`);
+    values.push(null); 
+    return `$${i++}`; 
   });
-  const authParams = input?.auth ?? null;
-  // const authValue = authParams ? getAuthValue(authParams, body) : null;
-  return { sql: transformedSql, values, auth: authParams};
+
+  return { 
+    sql: transformedSql, 
+    values, 
+    auth: input?.auth ?? null 
+  };
 };
 
 // export const getAuthValue = (

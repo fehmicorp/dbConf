@@ -1,4 +1,3 @@
-import { NextRequest, NextResponse } from "next/server";
 import handlePost from "./pre.method/post";
 import { Response } from "./post.method/response";
 
