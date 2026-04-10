@@ -169,6 +169,21 @@ POSTGRES_WRITE_URL=postgres://writer_user:password@localhost:5432/app_db
 
 ---
 
+## Publishing
+
+This package is publish-ready for npm.
+
+```bash
+npm install
+npm run build
+npm run test
+npm run publish:public
+```
+
+For a complete release checklist, see [`docs/PUBLISHING.md`](docs/PUBLISHING.md).
+
+---
+
 ## License
 
 MIT
